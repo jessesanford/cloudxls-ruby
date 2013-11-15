@@ -9,7 +9,7 @@ require 'cloudxls/version'
 
 module CloudXLS
   @https = true
-  @api_base = 'csv.io'
+  @api_base = 'cloudxls.com'.freeze
   @api_key  = ENV["CLOUDXLS_API_KEY"]
   @ssl_bundle_path  = File.dirname(__FILE__) + '/data/ca-certificates.crt'
   @verify_ssl_certs = true
@@ -23,7 +23,7 @@ module CloudXLS
     "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_base}/api/v1/#{path}"
   end
 
-  class ExportResponse
+  class Csv2ExcelResponse
     attr_reader :url, :uuid, :response
 
     def initialize(response)
@@ -34,30 +34,29 @@ module CloudXLS
     end
   end
 
-  # CloudXLS.csv2xls :data => File.new('/path/to/data.csv', 'r')
-  # CloudXLS.csv2xls :data => File.new("foo,bar\nlorem,ipsum")
-  # CloudXLS.csv2xls :data_url => "https://example.com/data.csv"
-  # CloudXLS.csv2xls :data_url => "https://username:password@example.com/data.csv"
+  # CloudXLS.csv2excel :data => File.new('/path/to/data.csv', 'r')
+  # CloudXLS.csv2excel :data => File.new("foo,bar\nlorem,ipsum")
+  # CloudXLS.csv2excel :data_url => "https://example.com/data.csv"
+  # CloudXLS.csv2excel :data_url => "https://username:password@example.com/data.csv"
   #
-  def self.csv2xls(params = {})
+  def self.csv2excel(params = {})
     check_api_key!
 
     headers = {}
 
     response = execute_request do
-      RestClient.post(api_url("export.json"), params, headers)
+      RestClient.post(api_url("csv2excel"), params, headers)
     end
 
     if params[:async].to_s == 'false'
       response
     else
-      ExportResponse.new(response)
+      Csv2ExcelResponse.new(response)
     end
   end
 
   def validate_params(params)
     # complain if excel_format together with template
-    #
   end
 
   def self.execute_request

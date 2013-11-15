@@ -8,7 +8,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["sebi.burkhard@gmail.com"]
   gem.description   = %q{Provides a simple ruby wrapper around the CloudXLS API}
   gem.summary       = %q{Provides a simple ruby wrapper around the CloudXLS API}
-  gem.homepage      = "https://csv.io"
+  gem.homepage      = "https://cloudxls.com"
   gem.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   gem.files         = `git ls-files`.split("\n")
   gem.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
