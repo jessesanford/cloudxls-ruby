@@ -48,7 +48,7 @@ module CloudXLS
       RestClient.post(api_url("csv2excel"), params, headers)
     end
 
-    if params[:async].to_s == 'false'
+    if params[:mode].to_s == 'inline'
       response
     else
       Csv2ExcelResponse.new(response)
