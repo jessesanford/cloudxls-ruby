@@ -23,7 +23,7 @@ module CloudXLS
     "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_base}/api/v1/#{path}"
   end
 
-  class Csv2ExcelResponse
+  class XpipeResponse
     attr_reader :url, :uuid, :response
 
     def initialize(response)
@@ -34,24 +34,24 @@ module CloudXLS
     end
   end
 
-  # CloudXLS.csv2excel :data => File.new('/path/to/data.csv', 'r')
-  # CloudXLS.csv2excel :data => File.new("foo,bar\nlorem,ipsum")
-  # CloudXLS.csv2excel :data_url => "https://example.com/data.csv"
-  # CloudXLS.csv2excel :data_url => "https://username:password@example.com/data.csv"
+  # CloudXLS.xpipe :data => File.new('/path/to/data.csv', 'r')
+  # CloudXLS.xpipe :data => File.new("foo,bar\nlorem,ipsum")
+  # CloudXLS.xpipe :data_url => "https://example.com/data.csv"
+  # CloudXLS.xpipe :data_url => "https://username:password@example.com/data.csv"
   #
-  def self.csv2excel(params = {})
+  def self.xpipe(params = {})
     check_api_key!
 
     headers = {}
 
     response = execute_request do
-      RestClient.post(api_url("csv2excel"), params, headers)
+      RestClient.post(api_url("xpipe"), params, headers)
     end
 
     if params[:mode].to_s == 'inline'
       response
     else
-      Csv2ExcelResponse.new(response)
+      XpipeResponse.new(response)
     end
   end
 
