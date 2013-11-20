@@ -6,12 +6,13 @@ require 'rest_client'
 require 'multi_json'
 
 require 'cloudxls/version'
+require 'cloudxls/csv_writer'
 
 module CloudXLS
   @https = true
   @api_base = 'cloudxls.com'.freeze
   @api_key  = ENV["CLOUDXLS_API_KEY"]
-  @ssl_bundle_path  = File.dirname(__FILE__) + '/data/ca-certificates.crt'
+  # @ssl_bundle_path  = File.dirname(__FILE__) + '/data/ca-certificates.crt'
   @verify_ssl_certs = true
 
   class << self
