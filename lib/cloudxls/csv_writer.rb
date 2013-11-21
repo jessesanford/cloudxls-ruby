@@ -1,108 +1,139 @@
 require 'csv'
 
 module CloudXLS
-  class CSVWriter
-    DATETIME_FORMAT = "%FT%T.%L%z".freeze
-    DATE_FORMAT = "%F".freeze
+  DATETIME_FORMAT = "%FT%T.%L%z".freeze
+  DATE_FORMAT = "%F".freeze
 
+  # Wrapper around stdlib CSV methods.
+  #
+  class CSV
+    def self.generate_line(arr, options = nil)
+      ::CSV.generate_line(arr.as_csv, options)
+    end
+  end
+
+
+  class CSVWriter
     # Generates CSV string.
     #
-    # @param [Array<String/Symbol>] columns
+    # @param [Enumerable] scope
     #   Method/attribute keys to for the export.
+    #
+    # @option opts [String] :encoding ("UTF-8")
+    #    Charset encoding of output.
+    #
+    # @option opts [Boolean] :skip_headers (false)
+    #    Do not output headers if first element is an ActiveRecord object.
+    #
+    # @option opts [Array]   :only     same as #as_json
+    # @option opts [Array]   :except   same as #as_json
+    # @option opts [Array]   :methods  same as #as_json
     #
     # @return [String]
     #   The full CSV as a string. Titleizes *columns* for the header.
     #
-    def self.text(scope, options = {})
-      columns = options[:columns]
+    def self.text(scope, opts = {})
+      encoding     = opts.delete(:encoding)     || "UTF-8"
+      skip_headers = opts.delete(:skip_headers) || false
 
-      str = ::CSV.generate do |csv|
+      str = ::CSV.generate(:encoding => encoding) do |csv|
 
-        if options[:skip_headers] != true
-          if scope.respond_to?(:column_names)
-            columns ||= scope.column_names
+        enum_method = scope_enumerator(scope)
+        scope.send(enum_method) do |record|
+
+          if skip_headers == false && !record.is_a?(Array)
+            titles = CloudXLS::Util.titles_for_serialize_options(record, opts)
+            csv << titles.map(&:titleize)
+            skip_headers = true
           end
-          if columns
-            csv << csv_titles(columns, :titleize)
-          end
-        end
 
-        enum = scope_enumerator(scope)
-        scope.send(enum) do |record|
-          csv << csv_row(record, columns)
+          csv << record.as_csv(opts)
         end
       end
       str.strip!
+      str
     end
 
+
+    # Generates Enumerator for streaming response.
+    #
     # Example
     #
-    #     Post.csv_enumerator(Post.all, [:title, :author, :published_at])
+    #     def index
+    #       # setup headers...
+    #       stream = CloudXLS::CSVWriter.csv_enumerator(Post.all, only: [:title, :author])
+    #       self.response_body = stream
+    #     end
     #
-    # @param [ActiveRecord::Scope] scope
-    #   An activerecord scope object for the records to be exported.
-    #   Example: Post.all.limit(500).where(author: "foo")
+    # Same options and parameters as #text.
     #
     # @return [Enumerator] enumerator to use for streaming response.
     #
     def self.enumerator(scope, options = {})
-      columns = options[:columns]
+      encoding     = options.delete(:encoding)     || "UTF-8"
+      skip_headers = options.delete(:skip_headers) || false
 
-      Enumerator.new do |row|
-        if options[:skip_headers] != true
-          if scope.respond_to?(:column_names)
-            columns ||= scope.column_names
+      Enumerator.new do |stream|
+        enum_method = scope_enumerator(scope)
+
+        scope.send(enum_method) do |record|
+          if !skip_headers && !record.is_a?(Array)
+            titles = CloudXLS::Util.titles_for_serialize_options(record, options)
+            stream << titles.map(&:titleize).to_csv
+            skip_headers = true
           end
-          if columns
-            row << csv_titles(columns, :titleize).to_csv
-          end
+
+          stream << record.as_csv(options).to_csv
         end
-
-        enum = scope_enumerator(scope)
-        scope.send(enum) do |record|
-          row << csv_row(record, columns).to_csv
-        end
-      end
-    end
-
-  private
-
-
-    def self.csv_row(obj, columns = [])
-      if obj.is_a?(Array)
-        obj.map{ |el| encode_for_csv(el) }
-      else
-        columns.map do |key|
-          encode_for_csv(obj.send(key))
-        end
-      end
-    end
-
-
-    def self.encode_for_csv(val)
-      case val
-      when DateTime,Time then val.strftime(DATETIME_FORMAT)
-      when Date          then val.strftime(DATE_FORMAT)
-      else
-        val
-      end
-    end
-
-    def self.csv_titles(column_names, strategy = :titleize)
-      column_names.map do |c|
-        title = c.to_s
-        title = title.send(strategy) if title.respond_to?(strategy)
-        title
       end
     end
 
 
     def self.scope_enumerator(scope)
-      if scope.respond_to?(:find_each)
+      if (scope.respond_to?(:arel) &&
+          scope.arel.orders.blank? &&
+          scope.arel.taken.blank?)
         :find_each
       else
         :each
       end
+    end
+  end
+end
+
+module CloudXLS
+  class Util
+    # Column and method-names of a model that correspond to the values from
+    # a #as_json/#as_csv call. In the same order.
+    #
+    # Example
+    #
+    #     CloudXLS::Util.titles_for_serialize_options(Post.new, only: [:author, :title], method: [:slug])
+    #     # => ['title', 'author', 'slug']
+    #
+    def self.titles_for_serialize_options(record, options = nil)
+      options ||= {}
+
+      attribute_names = record.attributes.keys
+      if only = options[:only]
+        arr = []
+        Array(only).map(&:to_s).each do |key|
+          arr.push(key) if attribute_names.include?(key)
+        end
+        attribute_names = arr
+      elsif except = options[:except]
+        attribute_names -= Array(except).map(&:to_s)
+      end
+
+      Array(options[:methods]).each do |m|
+        m = m.to_s
+        if record.respond_to?(m)
+          unless attribute_names.include?(m)
+            attribute_names.push(val)
+          end
+        end
+      end
+      attribute_names
     end
   end
 end

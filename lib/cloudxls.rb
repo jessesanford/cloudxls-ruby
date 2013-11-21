@@ -2,10 +2,12 @@ require 'cgi'
 require 'set'
 require 'openssl'
 require 'json'
+require 'date'
 require 'rest_client'
 require 'multi_json'
 
 require 'cloudxls/version'
+require 'cloudxls/core_ext'
 require 'cloudxls/csv_writer'
 
 module CloudXLS
