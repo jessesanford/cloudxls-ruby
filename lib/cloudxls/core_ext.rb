@@ -91,6 +91,14 @@ class Range
   end
 end
 
+class Hash
+  def as_csv(options = nil)
+    map do |key, val|
+      val.as_csv(options)
+    end
+  end
+end
+
 class Array
   def as_csv(options = nil)
     map do |val|
