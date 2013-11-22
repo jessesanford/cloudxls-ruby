@@ -92,9 +92,17 @@ class Range
 end
 
 class Hash
-  def as_csv(options = nil)
-    map do |key, val|
-      val.as_csv(options)
+  def as_csv(options = {})
+    attribute_names = keys
+
+    if (only = options[:only])
+      attribute_names = Array(only)
+    elsif (except = options[:except])
+      attribute_names -= Array(except)
+    end
+
+    attribute_names.map do |key|
+      self[key].as_csv
     end
   end
 end

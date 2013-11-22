@@ -5,6 +5,16 @@ describe "as_csv" do
     expect( {:foo => 1, :bar => Date.new(2013,12,24)}.as_csv ).to eq([1,'2013-12-24'])
   end
 
+  it "should handle Hash with :only" do
+    hash =  {:foo => "foo", :bar => "bar"}
+    expect( hash.as_csv(:only => :foo) ).to eq(["foo"])
+    expect( hash.as_csv(:only => [:foo]) ).to eq(["foo"])
+    expect( hash.as_csv(:only => [:bar]) ).to eq(["bar"])
+    expect( hash.as_csv(:only => [:foo, :bar]) ).to eq(["foo", "bar"])
+    expect( hash.as_csv(:only => [:bar, :foo]) ).to eq(["bar", "foo"])
+    #expect( hash.as_csv(:only => [:bar, :baz, :foo]) ).to eq(["foo", nil, "bar"])
+  end
+
   it "should handle Array" do
     expect( [1, Date.new(2013,12,24)].as_csv ).to eq([1,'2013-12-24'])
   end
