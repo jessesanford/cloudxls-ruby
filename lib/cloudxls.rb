@@ -12,7 +12,7 @@ require 'cloudxls/csv_writer'
 
 module CloudXLS
   @https = true
-  @api_base = 'cloudxls.com'.freeze
+  @api_base = 'api.cloudxls.com'.freeze
   @api_key  = ENV["CLOUDXLS_API_KEY"]
   # @ssl_bundle_path  = File.dirname(__FILE__) + '/data/ca-certificates.crt'
   @verify_ssl_certs = true
@@ -23,7 +23,7 @@ module CloudXLS
 
   def self.api_url(path = '')
     # @api_base + url
-    "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_base}/api/v1/#{path}"
+    "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_base}/v1/#{path}"
   end
 
   class XpipeResponse

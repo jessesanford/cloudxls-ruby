@@ -90,9 +90,9 @@ module CloudXLS
 
 
     def self.scope_enumerator(scope)
-      if (scope.respond_to?(:arel) &&
-          scope.arel.orders.blank? &&
-          scope.arel.taken.blank?)
+      if scope.respond_to?(:arel) &&
+         scope.arel.orders.blank? &&
+         scope.arel.taken.blank?
         :find_each
       else
         :each
@@ -111,9 +111,7 @@ module CloudXLS
     #     CloudXLS::Util.titles_for_serialize_options(Post.new, only: [:author, :title], method: [:slug])
     #     # => ['title', 'author', 'slug']
     #
-    def self.titles_for_serialize_options(record, options = nil)
-      options ||= {}
-
+    def self.titles_for_serialize_options(record, options = {})
       attribute_names = record.attributes.keys
       if only = options[:only]
         arr = []
