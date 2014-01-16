@@ -42,7 +42,7 @@ module CloudXLS
   # CloudXLS.xpipe :data_url => "https://example.com/data.csv"
   # CloudXLS.xpipe :data_url => "https://username:password@example.com/data.csv"
   #
-  def self.xpipe(params = {})
+  def self.convert(params = {})
     check_api_key!
 
     headers = {}
@@ -56,6 +56,10 @@ module CloudXLS
     else
       XpipeResponse.new(response)
     end
+  end
+
+  def self.xpipe(params = {})
+    convert(params)
   end
 
   def validate_params(params)
