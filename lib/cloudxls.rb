@@ -4,21 +4,17 @@ require 'openssl'
 require 'json'
 require 'date'
 require 'rest_client'
-require 'multi_json'
+require 'json'
 
-require 'cloudxls/version'
-require 'cloudxls/core_ext'
-require 'cloudxls/csv_writer'
+require_relative 'cloudxls/version'
 
-module CloudXLS
+class CloudXLS
   @https = true
   @api_base = 'api.cloudxls.com'.freeze
   @api_key  = ENV["CLOUDXLS_API_KEY"]
-  # @ssl_bundle_path  = File.dirname(__FILE__) + '/data/ca-certificates.crt'
-  @verify_ssl_certs = true
 
   class << self
-    attr_accessor :api_key, :api_base, :verify_ssl_certs, :api_version, :https
+    attr_accessor :api_key, :api_base, :api_version, :https
   end
 
   def self.api_url(path = '')
@@ -26,7 +22,8 @@ module CloudXLS
     "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_base}/v1/#{path}"
   end
 
-  class XpipeResponse
+
+  class CloudXLSResponse
     attr_reader :url, :uuid, :response
 
     def initialize(response)
@@ -37,10 +34,32 @@ module CloudXLS
     end
   end
 
-  # CloudXLS.xpipe :data => File.new('/path/to/data.csv', 'r')
-  # CloudXLS.xpipe :data => File.new("foo,bar\nlorem,ipsum")
-  # CloudXLS.xpipe :data_url => "https://example.com/data.csv"
-  # CloudXLS.xpipe :data_url => "https://username:password@example.com/data.csv"
+
+  def self.async(params = {})
+    if params["mode"]
+      params["mode"] = "async"
+    else
+      params[:mode] = "async"
+    end
+    CloudXLSResponse.new(convert(params))
+  end
+
+
+  def self.inline(params = {})
+    if params["mode"]
+      params["mode"] = "inline"
+    else
+      params[:mode] = "inline"
+    end
+    convert(params)
+  end
+
+
+  # @example
+  #     CloudXLS.convert :data => {:file => File.new('/path/to/data.csv', 'r')}
+  #     CloudXLS.convert :data => {:file => File.new("foo,bar\nlorem,ipsum")  }
+  #     CloudXLS.convert :data => {:url => "https://example.com/data.csv"}
+  #     CloudXLS.convert :data => {:url => "https://username:password@example.com/data.csv"}
   #
   def self.convert(params = {})
     check_api_key!
@@ -48,22 +67,15 @@ module CloudXLS
     headers = {}
 
     response = execute_request do
-      RestClient.post(api_url("xpipe"), params, headers)
+      RestClient.post(api_url("convert"), params, headers)
     end
 
-    if params[:mode].to_s == 'inline'
-      response
-    else
-      XpipeResponse.new(response)
-    end
+    response
   end
 
+  # @deprecated
   def self.xpipe(params = {})
     convert(params)
-  end
-
-  def validate_params(params)
-    # complain if excel_format together with template
   end
 
   def self.execute_request
@@ -93,8 +105,8 @@ module CloudXLS
   end
 
   def self.parse_response(response)
-    json = MultiJson.load(response.body)
-  rescue MultiJson::DecodeError => e
+    json = JSON.parse(response.body)
+  rescue => e
     raise general_api_error(response.code, response.body)
   end
 
@@ -111,20 +123,16 @@ private
     when RestClient::ServerBrokeConnection, RestClient::RequestTimeout
       message = "Could not connect to CloudXLS (#{@api_base}). " +
         "Please check your internet connection and try again. "
-
     when RestClient::SSLCertificateNotVerified
       message = "Could not verify CloudXLS's SSL certificate. " +
         "Please make sure that your network is not intercepting certificates. "
-
     when SocketError
       message = "Unexpected error communicating when trying to connect to CloudXLS. " +
         "You may be seeing this message because your DNS is not working. " +
         "To check, try running 'host cloudxls.com' from the command line."
-
     else
       message = "Unexpected error communicating with CloudXLS. " +
         "If this problem persists, let us know at support@cloudxls.com."
-
     end
 
     raise StandardError.new(message + "\n\n(Network error: #{e.message})")

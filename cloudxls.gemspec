@@ -16,7 +16,6 @@ Gem::Specification.new do |gem|
   gem.version       = CloudXLS::VERSION
 
   gem.add_dependency('rest-client', '~> 1.4')
-  gem.add_dependency('multi_json', '>= 1.0.4', '< 2')
 
   gem.add_development_dependency "minitest"
   gem.add_development_dependency "rake"
