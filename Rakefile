@@ -1,9 +1,4 @@
-task :default => [:test]
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec)
 
-task :test do
-  ret = true
-  Dir["test/**/*.rb"].each do |f|
-    ret = ret && ruby(f, '')
-  end
-  exit(ret)
-end
+task :default => [:spec]

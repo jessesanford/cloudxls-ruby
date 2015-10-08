@@ -10,16 +10,18 @@ require_relative 'cloudxls/version'
 
 class CloudXLS
   @https = true
-  @api_base = 'api.cloudxls.com'.freeze
+  @api_host = ENV["CLOUDXLS_API_HOST"] || 'api.cloudxls.com'.freeze
   @api_key  = ENV["CLOUDXLS_API_KEY"]
+  @api_secret = ENV["CLOUDXLS_API_SECRET"]
+  @api_version = 2
 
   class << self
-    attr_accessor :api_key, :api_base, :api_version, :https
+    attr_accessor :api_key, :api_host, :api_secret, :api_version, :https
   end
 
   def self.api_url(path = '')
     # @api_base + url
-    "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_base}/v1/#{path}"
+    "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_host}/v#{api_version}/#{path}"
   end
 
 
@@ -121,7 +123,7 @@ private
   def self.handle_restclient_error(e)
     case e
     when RestClient::ServerBrokeConnection, RestClient::RequestTimeout
-      message = "Could not connect to CloudXLS (#{@api_base}). " +
+      message = "Could not connect to CloudXLS (#{@api_host}). " +
         "Please check your internet connection and try again. "
     when RestClient::SSLCertificateNotVerified
       message = "Could not verify CloudXLS's SSL certificate. " +
