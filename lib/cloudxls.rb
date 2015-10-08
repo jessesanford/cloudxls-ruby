@@ -24,6 +24,34 @@ class CloudXLS
     "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_host}/v#{api_version}/#{path}"
   end
 
+  def self.new_request
+    CloudXLSRequest.new(api_url)
+  end
+
+  class CloudXLSRequest
+    attr_accessor :config, :data
+
+    def initialize(url)
+      @url = url
+      @data = {}
+    end
+
+    def config=(hash_or_json)
+      @config = JSON.generate(hash_or_json) rescue hash_or_json
+    end
+
+    def add(name, data)
+      @data[name] = data
+    end
+
+    def stream(&block)
+      yield(self)
+    end
+
+    def response_body
+      @data.map {|_,v| v}.join
+    end
+  end
 
   class CloudXLSResponse
     attr_reader :url, :uuid, :response
