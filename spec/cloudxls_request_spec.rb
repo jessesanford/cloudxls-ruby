@@ -2,33 +2,55 @@ require 'spec_helper'
 
 describe "CloudXLSRequest" do
   describe "#config" do
-    it "hash and hash json are equivalent" do
-      config_hash = {key1: "value", key2: "value"}
-      hash_req = CloudXLS.new_request
-      json_req = CloudXLS.new_request
-      hash_req.config = config_hash
-      json_req.config = JSON.generate(config_hash)
-      expect(hash_req.config).to eq(json_req.config)
+    let(:req) { CloudXLS.start }
+    let(:hsh) { {k1: "v", k2: "v"} }
+    let(:jsn) { JSON.generate(hsh) }
+    it "can be provided as json" do
+      req.config = jsn
+      expect(req.config).to eq(jsn)
+    end
+
+    it "or it is converted to json" do
+      req.config = hsh
+      expect(req.config).to eq(jsn)
+    end
+
+    it "can't be set twice" do
+      req.config = hsh
+      expect{req.config = jsn}.to raise_error(StandardError)
     end
   end
 
-  describe "#stream" do
-    it "streams sheet data" do
-      req = CloudXLS.new_request
-      req.stream do |stream|
-        stream.add "name", "data"
+  describe "#add" do
+    let(:data) { {n1: "csv,data", n2: "data,csv"} }
+    it "streams sheet data by sheet name" do
+      req = CloudXLS.start do |r|
+        data.each do |n,d|
+          r.add(n) do |s|
+            s << d
+          end
+        end
       end
+      data.each do |n,d|
+        expect(req.data[n]).to eq(d)
+      end
+    end
+
+    it "raises error if data added twice" do
+      expect {
+        CloudXLS.start do |r|
+          2.times do
+            r.add("n1") do |s|
+              s << "csv,data"
+            end
+          end
+        end
+      }.to raise_error(StandardError)
     end
   end
 
   describe "#response_body" do
-    it "blocks for response" do
-      req = CloudXLS.new_request
-      req.stream do |stream|
-        stream.add "name1", "data"
-        stream.add "name2", "data"
-      end
-      expect(req.response_body).to eq("datadata")
+    it "" do
     end
   end
 end

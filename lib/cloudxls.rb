@@ -24,32 +24,57 @@ class CloudXLS
     "http#{@https ? 's' : ''}://#{@api_key}:@#{@api_host}/v#{api_version}/#{path}"
   end
 
-  def self.new_request
-    CloudXLSRequest.new(api_url)
+  def self.start(&block)
+    req = CloudXLSRequest.new(api_url)
+    yield(req) if block_given?
+    return req
   end
 
   class CloudXLSRequest
     attr_accessor :config, :data
 
     def initialize(url)
-      @url = url
+      @conn = CloudXLSConnection.new(url)
       @data = {}
     end
 
     def config=(hash_or_json)
-      @config = JSON.generate(hash_or_json) rescue hash_or_json
+      if @config.nil?
+        @config = JSON.generate(hash_or_json) rescue hash_or_json
+        @conn.send_json(@config)
+      else
+        raise StandardError.new("Already sent config")
+      end
     end
 
-    def add(name, data)
-      @data[name] = data
-    end
-
-    def stream(&block)
-      yield(self)
+    def add(name, &block)
+      if @data[name].nil?
+        yield(@data[name] = "")
+        @conn.send_data(name, @data[name])
+      else
+        raise StandardError.new("Already streamed data for #{name}")
+      end
+      return self
     end
 
     def response_body
-      @data.map {|_,v| v}.join
+      @conn.wait_body
+    end
+  end
+
+  class CloudXLSConnection
+    def initialize(url)
+    end
+
+    def send_json(json)
+    end
+
+    def send_data(name, data)
+    end
+
+    def wait_body
+      # stop upload
+      # return response
     end
   end
 
