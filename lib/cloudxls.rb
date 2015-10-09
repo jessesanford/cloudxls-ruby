@@ -47,14 +47,14 @@ class CloudXLS
       end
     end
 
-    def add(name, &block)
+    def add(name, sheet_io=nil, &block)
       if @data[name].nil?
-        yield(@data[name] = "")
-        @conn.send_data(name, @data[name])
+        yield(@data[name] = "") if block_given?
+        sheet_io ||= StringIO.new(@data[name])
+        @conn.send_data(name, sheet_io)
       else
         raise StandardError.new("Already streamed data for #{name}")
       end
-      return self
     end
 
     def response_body
@@ -73,7 +73,7 @@ class CloudXLS
     end
 
     def wait_body
-      # stop upload
+      # end upload
       # return response
     end
   end
