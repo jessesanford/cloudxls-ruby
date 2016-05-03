@@ -127,7 +127,7 @@ module CloudXLS
         m = m.to_s
         if record.respond_to?(m)
           unless attribute_names.include?(m)
-            attribute_names.push(val)
+            attribute_names.push(m)
           end
         end
       end
